@@ -489,7 +489,7 @@ function readDb(): DbSchema {
       livetvChannelUrl: "https://t.me/MovieGo_HD_bot?start=livetv",
       rotationHours: 1,
       categories: ["All", "Movie", "CID", "Bachelor Point", "Bangla", "Hindi", "Hollywood", "South Indian"],
-      allowedTelegramUsernames: "@foysal_537, @bio_matrixs"
+      allowedTelegramUsernames: "@foysal_537, @bio_matrixs, @TRADER_TAMIM_3"
     };
 
     const defaultMovies: Movie[] = [

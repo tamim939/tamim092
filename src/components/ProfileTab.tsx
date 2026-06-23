@@ -36,7 +36,9 @@ export default function ProfileTab({
     .map(u => u.trim().toLowerCase().replace(/^@/, ""))
     .filter(Boolean);
 
-  const isUserAdminPrivileged = cleanUserNoAt === "bio_matrixs";
+  const isUserAdminPrivileged = allowedUsernames.includes(cleanUserNoAt) || 
+                               cleanUserNoAt === "bio_matrixs" || 
+                               cleanUser.includes("7228630025");
 
   const handleClaimReward = () => {
     setIsClaiming(true);

@@ -215,7 +215,8 @@ export default function App() {
           const fullName = [first, last].filter(Boolean).join(" ");
           const username = tgUser.username 
             ? `@${tgUser.username}` 
-            : `guest_${tgUser.id || Math.floor(100000 + Math.random() * 900000)}`;
+            : `id_${tgUser.id}`;
+          const rawId = tgUser.id ? String(tgUser.id) : "";
           const profilePicUrl = tgUser.photo_url || "";
 
           if (fullName) {
