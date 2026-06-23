@@ -1,0 +1,22 @@
+{
+  "movies": [],
+  "settings": {
+    "defaultTimerSeconds": 10,
+    "telegramBotUrl": "https://t.me/MovieGo_HD_bot",
+    "facebookGroupUrl": "https://facebook.com/groups/movieelink",
+    "mainChannelUrl": "https://t.me/MovieGo_HD_bot?start=channel",
+    "chatGroupUrl": "https://t.me/MovieGo_HD_bot?start=chat",
+    "adultChannelUrl": "https://t.me/MovieGo_HD_bot?start=adult",
+    "livetvChannelUrl": "https://t.me/MovieGo_HD_bot?start=livetv",
+    "rotationHours": 1,
+    "categories": [
+      "All",
+      "Movie",
+      "Bachelor Point",
+      "Bangla",
+      "Hindi",
+      "Animation"
+    ],
+    "allowedTelegramUsernames": "@foysal_537, @bio_matrixs"
+  }
+}

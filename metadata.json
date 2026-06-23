@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Movie GO HD",
+  "description": "Premium movie portal with secure admin controls, automated hourly/3-hourly ad rotation, custom countdown timers, and direct Telegram bot integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,278 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom overlay or scrollbar adjustments for premium feel */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ef4444;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
+
+/* Base custom styles to simplify Glassmorphism class sets */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-heavy {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.card-glow {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glow-button {
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+  transition: all 0.3s ease;
+}
+
+.glow-button:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.55);
+}
+
+/* --- LIGHT MODE SPECIFIC PREMIUM STYLES --- */
+#movie-go-root.light-mode {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+}
+
+/* Telegram and brand headers */
+#movie-go-root.light-mode #tg-mock-header {
+  background-color: #e2e8f0 !important;
+  border-bottom-color: #cbd5e1 !important;
+}
+#movie-go-root.light-mode #brand-header {
+  background-color: #ffffff !important;
+  border-bottom-color: #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+}
+
+/* Category pills */
+#movie-go-root.light-mode #categories-scroll button:not(.bg-gradient-to-r) {
+  background-color: #ffffff !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+#movie-go-root.light-mode #categories-scroll button:not(.bg-gradient-to-r):hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Search input bar */
+#movie-go-root.light-mode #home-search-panel input,
+#movie-go-root.light-mode #search-view input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Movie Card list container styling scale-up */
+#movie-go-root.light-mode #movie-grid .group {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+#movie-go-root.light-mode #movie-grid .group:hover {
+  border-color: #ef4444 !important;
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1) !important;
+}
+#movie-go-root.light-mode #movie-grid .group h3 {
+  color: #1e293b !important;
+}
+#movie-go-root.light-mode #movie-grid .group h3:hover {
+  color: #ef4444 !important;
+}
+#movie-go-root.light-mode #movie-grid .group .border-t {
+  border-top-color: #f1f5f9 !important;
+}
+
+/* Profile cards and grids */
+#movie-go-root.light-mode #profile-tab .bg-slate-900\/60,
+#movie-go-root.light-mode #profile-tab .bg-slate-900\/40 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+}
+#movie-go-root.light-mode #profile-tab .bg-slate-900\/60 h3 {
+  color: #0f172a !important;
+}
+#movie-go-root.light-mode #profile-tab h4 {
+  color: #64748b !important;
+}
+#movie-go-root.light-mode #profile-tab p {
+  color: #475569 !important;
+}
+#movie-go-root.light-mode #profile-tab button {
+  color: #1e293b !important;
+}
+/* Ensure colors for buttons in Profile Actions */
+#movie-go-root.light-mode #profile-tab #vip-membership-btn,
+#movie-go-root.light-mode #profile-tab #movie-request-btn,
+#movie-go-root.light-mode #profile-tab #leaderboard-btn,
+#movie-go-root.light-mode #profile-tab #training-btn {
+  color: #ffffff !important;
+}
+#movie-go-root.light-mode #profile-tab #toggle-lang {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+#movie-go-root.light-mode #profile-tab #open-admin-login-modal {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+#movie-go-root.light-mode #profile-tab #open-admin-login-modal:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #ef4444 !important;
+}
+#movie-go-root.light-mode #profile-tab input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Bottom Navigation Bar */
+#movie-go-root.light-mode #bottom-navigation {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border-top-color: #e2e8f0 !important;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.03) !important;
+}
+#movie-go-root.light-mode #bottom-navigation button span {
+  color: #64748b !important;
+}
+#movie-go-root.light-mode #bottom-navigation button span.text-red-500 {
+  color: #ef4444 !important;
+}
+#movie-go-root.light-mode #bottom-navigation button svg {
+  color: #64748b !important;
+}
+#movie-go-root.light-mode #bottom-navigation button svg.text-red-500 {
+  color: #ef4444 !important;
+}
+
+/* Modals & headers */
+#movie-go-root.light-mode .text-white {
+  color: #0f172a !important;
+}
+#movie-go-root.light-mode h3.text-white,
+#movie-go-root.light-mode h2.text-white {
+  color: #0f172a !important;
+}
+#movie-go-root.light-mode p.text-slate-400 {
+  color: #475569 !important;
+}
+#movie-go-root.light-mode span.text-slate-400 {
+  color: #475569 !important;
+}
+
+/* Ensure fixed modal overlays themselves stay pristine dark with crisp white texts, input backgrounds, and readable states */
+#movie-go-root.light-mode .fixed.z-50 {
+  color: #f1f5f9 !important;
+}
+
+#movie-go-root.light-mode .fixed.z-50 .text-white,
+#movie-go-root.light-mode .fixed.z-50 h2.text-white,
+#movie-go-root.light-mode .fixed.z-50 h3.text-white,
+#movie-go-root.light-mode .fixed.z-50 h2,
+#movie-go-root.light-mode .fixed.z-50 h3 {
+  color: #ffffff !important;
+}
+
+#movie-go-root.light-mode .fixed.z-50 p,
+#movie-go-root.light-mode .fixed.z-50 p.text-slate-400,
+#movie-go-root.light-mode .fixed.z-50 .text-slate-300,
+#movie-go-root.light-mode .fixed.z-50 .text-slate-200 {
+  color: #cbd5e1 !important;
+}
+
+#movie-go-root.light-mode .fixed.z-50 label,
+#movie-go-root.light-mode .fixed.z-50 label.text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+#movie-go-root.light-mode .fixed.z-50 span,
+#movie-go-root.light-mode .fixed.z-50 span.text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+#movie-go-root.light-mode .fixed.z-50 input {
+  background-color: #0c111d !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+#movie-go-root.light-mode .fixed.z-50 input::placeholder {
+  color: #475569 !important;
+}
+
+/* Admin Panel Specific Premium Light Mode Styles so settings & dashboard inputs are extremely clear */
+#movie-go-root.light-mode #admin-panel {
+  color: #1e293b !important;
+}
+
+#movie-go-root.light-mode #admin-panel .bg-slate-900\/40,
+#movie-go-root.light-mode #admin-panel .bg-slate-950\/40,
+#movie-go-root.light-mode #admin-panel .bg-slate-900 {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+}
+
+#movie-go-root.light-mode #admin-panel input,
+#movie-go-root.light-mode #admin-panel select,
+#movie-go-root.light-mode #admin-panel textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+#movie-go-root.light-mode #admin-panel label {
+  color: #475569 !important;
+}
+
+#movie-go-root.light-mode #admin-panel p {
+  color: #64748b !important;
+}
+
+#movie-go-root.light-mode #admin-panel h2,
+#movie-go-root.light-mode #admin-panel h3,
+#movie-go-root.light-mode #admin-panel h2.text-white,
+#movie-go-root.light-mode #admin-panel h3.text-white {
+  color: #0f172a !important;
+}
+
+#movie-go-root.light-mode #admin-panel button:not(.bg-red-600):not(.bg-amber-500\/10) {
+  border-color: #cbd5e1 !important;
+}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Google AI Studio App</title>
+    <script>
+      // Global error shield to prevent cross-origin/sandbox/third-party script noise from registering as a fatal app crash
+      window.addEventListener('error', function (event) {
+        const errorMsg = event.message || '';
+        const errorUrl = event.filename || '';
+        
+        // Suppress generic "Script error." that contains no useful stack trace and comes from 3rd party scripts or extensions
+        if (
+          errorMsg === 'Script error.' || 
+          errorMsg.includes('Script error') || 
+          !errorUrl || 
+          errorUrl.indexOf(window.location.origin) === -1
+        ) {
+          console.warn('Silenced cross-origin / third-party / sandbox error event safely:', errorMsg, 'at', errorUrl);
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          return true;
+        }
+      }, true);
+
+      window.addEventListener('unhandledrejection', function (event) {
+        // Suppress background promise rejection from Firebase Analytics/Ad blockers etc., that we can't control
+        const reason = event.reason || '';
+        const reasonMsg = typeof reason === 'string' ? reason : (reason.message || '');
+        if (
+          reasonMsg.includes('Script error') || 
+          reasonMsg.includes('analytics') || 
+          reasonMsg.includes('Firebase') || 
+          reasonMsg.includes('extension')
+        ) {
+          console.warn('Silenced unhandled promise rejection safely:', reasonMsg);
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      }, true);
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

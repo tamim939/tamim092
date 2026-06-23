@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "DbSchema": {
+      "title": "DbSchema",
+      "description": "The main movie catalog and application settings schema",
+      "type": "object",
+      "properties": {
+        "movies": {
+          "type": "array",
+          "description": "List of movie credentials, category, rates, and parameters"
+        },
+        "settings": {
+          "type": "object",
+          "description": "Configuration urls and routing variables"
+        }
+      },
+      "required": ["movies", "settings"]
+    }
+  },
+  "firestore": {
+    "/app_data/main_db": {
+      "schema": "DbSchema",
+      "description": "Primary document preserving the movies array and settings catalog persistently"
+    }
+  }
+}
