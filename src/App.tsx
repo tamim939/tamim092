@@ -113,9 +113,9 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Load Initial Movies and Settings from full-stack server
-  const fetchAllData = async () => {
+  const fetchAllData = async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const [moviesRes, settingsRes] = await Promise.all([
         fetch(`/api/movies?t=${Date.now()}`),
         fetch(`/api/settings?t=${Date.now()}`)
@@ -353,7 +353,7 @@ export default function App() {
         body: JSON.stringify({ ...movieData, adSlots: finalAdSlots })
       });
       if (res.ok) {
-        await fetchAllData();
+        await fetchAllData(true);
       }
     } catch (e) {
       console.error(e);
@@ -374,7 +374,7 @@ export default function App() {
         body: JSON.stringify(mergedData)
       });
       if (res.ok) {
-        await fetchAllData();
+        await fetchAllData(true);
       }
     } catch (e) {
       console.error(e);
@@ -403,7 +403,7 @@ export default function App() {
         method: "DELETE"
       });
       if (res.ok) {
-        await fetchAllData();
+        await fetchAllData(true);
       }
     } catch (e) {
       console.error(e);

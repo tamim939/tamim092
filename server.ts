@@ -64,145 +64,7 @@ function initDb() {
     allowedTelegramUsernames: "@foysal_537, @bio_matrixs, @TRADER_TAMIM_3"
   };
 
-  const defaultMovies: Movie[] = [
-    {
-      id: "m1",
-      title: "Rockstar 2026 Movie HD",
-      banglaTitle: "রকস্টার মুভি। Rockstar 2026 Movie HD",
-      category: "Movie",
-      rating: "8.5",
-      releaseDate: "12 May 2026",
-      imageUrl: "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&q=80&w=1200", // backup or teaser image
-      teaserImageUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=1200",
-      downloadUrl: "https://example.com/download/rockstar-2026",
-      isBanner: true,
-      isUpcoming: false,
-      status: "Released",
-      initials: "MB",
-      timerSeconds: 10,
-      adSlots: [
-        "https://www.google.com",
-        "https://www.wikipedia.org",
-        "https://www.github.com",
-        "https://www.youtube.com",
-        "https://www.medium.com",
-        "https://www.reddit.com",
-        "https://www.quora.com",
-        "https://www.stackoverflow.com",
-        "https://www.linkedin.com",
-        "https://www.bing.com"
-      ]
-    },
-    {
-      id: "m2",
-      title: "SOLDIER 2026 Shakib Khan Movie",
-      banglaTitle: "সোলজার ২০২৬। Soldier - Shakib Khan",
-      category: "Bangla",
-      rating: "9.2",
-      releaseDate: "25 Sep 2026",
-      imageUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800",
-      teaserImageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=1200",
-      downloadUrl: "https://example.com/download/soldier-2026",
-      isBanner: true,
-      isUpcoming: true,
-      status: "Coming Soon",
-      initials: "FA",
-      timerSeconds: 12,
-      adSlots: [
-        "https://example.com/ad1",
-        "https://example.com/ad2",
-        "https://example.com/ad3",
-        "https://example.com/ad4",
-        "https://example.com/ad5",
-        "https://example.com/ad6",
-        "https://example.com/ad7",
-        "https://example.com/ad8",
-        "https://example.com/ad9",
-        "https://example.com/ad10"
-      ]
-    },
-    {
-      id: "m3",
-      title: "Soptodingar Guptodhon",
-      banglaTitle: "সপ্তডিঙার গুপ্তধন - Soptodingar Guptodhon",
-      category: "Bangla",
-      rating: "7.9",
-      releaseDate: "03 Aug 2025",
-      imageUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&q=80&w=800",
-      teaserImageUrl: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&q=80&w=1200",
-      downloadUrl: "https://example.com/download/soptodingar-guptodhon",
-      isBanner: false,
-      isUpcoming: false,
-      status: "Released",
-      initials: "MB",
-      timerSeconds: 10,
-      adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-    },
-    {
-      id: "m4",
-      title: "Leo (Hindi Raw UHD)",
-      banglaTitle: "লিও হিন্দি এইচডি লিক",
-      category: "Hindi",
-      rating: "8.1",
-      releaseDate: "19 Oct 2023",
-      imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800",
-      downloadUrl: "https://example.com/download/leo",
-      isBanner: false,
-      isUpcoming: false,
-      status: "Released",
-      initials: "FA",
-      timerSeconds: 10,
-      adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-    },
-    {
-      id: "m5",
-      title: "Monsieur Hulot's Holiday",
-      banglaTitle: "মঁসিয়ে উলোর হলিডে (Classic)",
-      category: "Hollywood",
-      rating: "6.9",
-      releaseDate: "25 Feb 1953",
-      imageUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&q=80&w=800",
-      downloadUrl: "https://example.com/download/mon-hulot",
-      isBanner: false,
-      isUpcoming: true,
-      status: "Released",
-      initials: "MB",
-      timerSeconds: 10,
-      adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-    },
-    {
-      id: "m6",
-      title: "PlayTime",
-      banglaTitle: "প্লে-টাইম (Classic Comedy)",
-      category: "Hollywood",
-      rating: "7.7",
-      releaseDate: "13 Dec 1967",
-      imageUrl: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=800",
-      downloadUrl: "https://example.com/download/playtime",
-      isBanner: false,
-      isUpcoming: true,
-      status: "Released",
-      initials: "FA",
-      timerSeconds: 10,
-      adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-    },
-    {
-      id: "m7",
-      title: "Bachelor Point Season 5",
-      banglaTitle: "ব্যাচেলর পয়েন্ট সিজন ৫ - Bachelor Point S5",
-      category: "Bachelor Point",
-      rating: "9.5",
-      releaseDate: "20 Jun 2026",
-      imageUrl: "https://images.unsplash.com/photo-1585647347483-22b66260dfff?auto=format&fit=crop&q=80&w=800",
-      downloadUrl: "https://example.com/download/bachelor-point",
-      isBanner: false,
-      isUpcoming: false,
-      status: "Released",
-      initials: "FA",
-      timerSeconds: 8,
-      adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-    }
-  ];
+  const defaultMovies: Movie[] = [];
 
   if (!fs.existsSync(DB_PATH)) {
     const defaultDb: DbSchema = {
@@ -792,11 +654,21 @@ async function startServer() {
   // Load initial dataset from Firestore immediately on boot
   syncFromFirestore().then(() => {
     // One-time cleanup for default seeded movies from previous versions
-    if (globalCachedDb && globalCachedDb.movies.some(m => m.id.startsWith("m"))) {
-      console.log("Detected legacy default movies. Cleaning up database to ensure a fresh start...");
-      globalCachedDb.movies = globalCachedDb.movies.filter(m => !m.id.startsWith("m"));
-      writeDb(globalCachedDb);
-      syncToFirestore(globalCachedDb).catch(console.error);
+    if (globalCachedDb && globalCachedDb.movies) {
+      const originalCount = globalCachedDb.movies.length;
+      const legacyTitles = ["Rockstar 2026 Movie HD", "SOLDIER 2026 Shakib Khan Movie", "Soptodingar Guptodhon"];
+      
+      globalCachedDb.movies = globalCachedDb.movies.filter(m => {
+        const isLegacyId = m.id.startsWith("m") && !m.id.startsWith("movie_");
+        const isLegacyTitle = legacyTitles.includes(m.title);
+        return !(isLegacyId || isLegacyTitle);
+      });
+
+      if (globalCachedDb.movies.length !== originalCount) {
+        console.log(`Detected legacy default movies. Removed ${originalCount - globalCachedDb.movies.length} example entries to ensure a fresh start.`);
+        writeDb(globalCachedDb);
+        syncToFirestore(globalCachedDb).catch(console.error);
+      }
     }
   }).catch(e => console.error("Initial Firestore sync failed:", e));
 

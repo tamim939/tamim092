@@ -26,7 +26,7 @@ export default function AdminPanel({
   isBangla = false
 }: AdminPanelProps) {
   // Tabs: 'settings', 'add_movie', 'manage_movies'
-  const [activeSubTab, setActiveSubTab] = useState<"settings" | "add_movie" | "manage_movies">("settings");
+  const [activeSubTab, setActiveSubTab] = useState<"settings" | "add_movie" | "manage_movies">("manage_movies");
 
   // Selection for edit
   const [editingMovieId, setEditingMovieId] = useState<string | null>(null);
@@ -768,9 +768,21 @@ export default function AdminPanel({
                 Edit thumbnails, custom ad sets, status configurations, or delete.
               </p>
             </div>
-            <span className="text-xs bg-red-600/10 text-red-500 px-3 py-1 rounded-xl border border-red-500/10 font-mono">
-              Count: {movies.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (confirm(isBangla ? "আপনি কি নিশ্চিত যে সব মুভি মুছে ফেলতে চান?" : "Are you sure you want to delete ALL movies? This cannot be undone.")) {
+                    movies.forEach(m => onDeleteMovie(m.id));
+                  }
+                }}
+                className="text-[10px] bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1 rounded-xl border border-red-500/10 font-mono transition-colors"
+              >
+                {isBangla ? "সব মুভি মুছুন" : "Clear All Movies"}
+              </button>
+              <span className="text-xs bg-red-600/10 text-red-500 px-3 py-1 rounded-xl border border-red-500/10 font-mono">
+                Count: {movies.length}
+              </span>
+            </div>
           </div>
 
           <div className="space-y-2.5 max-h-[500px] overflow-y-auto">
