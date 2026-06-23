@@ -95,9 +95,12 @@ function getFirebaseConfig() {
   const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || fileConfig.projectId || "win333-c2cee";
   const databaseId = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID || fileConfig.firestoreDatabaseId || "(default)";
 
+  const apiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || fileConfig.apiKey || "";
+
   return {
     projectId,
     databaseId,
+    apiKey
   };
 }
 

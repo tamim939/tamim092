@@ -4,7 +4,7 @@ import {
   Save, Trash2, Edit2, PlusCircle, Settings, Film, Link, Clock, Check,
   AlertCircle, ShieldCheck, Eye, RefreshCw, Layers
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface AdminPanelProps {
   movies: Movie[];
