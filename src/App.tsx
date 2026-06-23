@@ -139,6 +139,9 @@ export default function App() {
 
   useEffect(() => {
     fetchAllData();
+    // Poll for updates every 30 seconds to sync with server-side changes
+    const interval = setInterval(() => fetchAllData(true), 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Autodetect Telegram WebApp User visiting the bot

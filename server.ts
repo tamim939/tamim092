@@ -393,6 +393,9 @@ function readDb(): DbSchema {
 function writeDb(data: DbSchema) {
   // Always update our in-memory global cache as the active state immediately
   globalCachedDb = data;
+  // Update lastFirestoreSyncTime immediately to prevent ensureFreshData from overwriting local state
+  // while syncToFirestore is in progress
+  lastFirestoreSyncTime = Date.now();
   
   try {
     const dir = path.dirname(DB_PATH);
