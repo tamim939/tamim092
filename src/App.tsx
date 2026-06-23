@@ -121,68 +121,9 @@ export default function App() {
         fetch(`/api/settings?t=${Date.now()}`)
       ]);
 
-      let serverMovies: Movie[] = [];
       if (moviesRes.ok) {
-        serverMovies = await moviesRes.json();
-      }
-
-      // Sync with localStorage to survive cold starts and server restarts
-      let localCustomMovies: Movie[] = [];
-      try {
-        const stored = localStorage.getItem("movie_go_custom_movies");
-        if (stored) {
-          localCustomMovies = JSON.parse(stored);
-        }
-      } catch (err) {
-        console.warn("Failed to load local custom movies:", err);
-      }
-
-      // Combine server movies and local custom movies (avoid duplicates by id/title)
-      const combinedMovies = [...serverMovies];
-      for (const m of localCustomMovies) {
-        if (!combinedMovies.some((sm) => sm.id === m.id || sm.title === m.title)) {
-          combinedMovies.unshift(m);
-        }
-      }
-
-      setMovies(combinedMovies);
-
-      // Automatically sync any custom movies in localStorage back to the server to prevent data loss on server restarts/cold-starts
-      const missingOnServer = localCustomMovies.filter(
-        (lm) => !serverMovies.some((sm) => sm.id === lm.id || sm.title.toLowerCase().trim() === lm.title.toLowerCase().trim())
-      );
-
-      if (missingOnServer.length > 0) {
-        console.log(`Auto background synchronization: uploading ${missingOnServer.length} movies to server...`);
-        Promise.all(
-          missingOnServer.map(async (movie) => {
-            try {
-              await fetch("/api/movies", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(movie)
-              });
-            } catch (err) {
-              console.warn("Failed background upload for movie:", movie.title, err);
-            }
-          })
-        ).then(() => {
-          console.log("Background synchronization complete! Refreshing unified database list...");
-          fetch(`/api/movies?t=${Date.now()}`)
-            .then((nRes) => (nRes.ok ? nRes.json() : []))
-            .then((freshMovies) => {
-              if (freshMovies && freshMovies.length > 0) {
-                const finalMovies = [...freshMovies];
-                for (const m of localCustomMovies) {
-                  if (!finalMovies.some((sm) => sm.id === m.id || sm.title === m.title)) {
-                    finalMovies.unshift(m);
-                  }
-                }
-                setMovies(finalMovies);
-              }
-            })
-            .catch((rErr) => console.warn("Failed to fetch fresh server list after background sync:", rErr));
-        });
+        const serverMovies: Movie[] = await moviesRes.json();
+        setMovies(serverMovies);
       }
 
       if (settingsRes.ok) {
@@ -403,42 +344,8 @@ export default function App() {
   };
 
   const handleAddMovie = async (movieData: Partial<Movie>) => {
-    const tempId = "movie_" + Date.now().toString();
     const finalAdSlots = normalizeAdSlots(movieData.adSlots);
-    const newMovie: Movie = {
-      id: tempId,
-      title: movieData.title || "Untitled Movie",
-      banglaTitle: movieData.banglaTitle || "",
-      category: movieData.category || "All",
-      rating: movieData.rating || "8.5",
-      releaseDate: movieData.releaseDate || new Date().toLocaleDateString(),
-      imageUrl: movieData.imageUrl || "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&q=80&w=800",
-      teaserImageUrl: movieData.teaserImageUrl || "",
-      downloadUrl: movieData.downloadUrl || "https://t.me/MovieGo_HD_bot",
-      isBanner: !!movieData.isBanner,
-      isUpcoming: !!movieData.isUpcoming,
-      status: movieData.isUpcoming ? "Coming Soon" : "Released",
-      initials: movieData.initials || "FA",
-      timerSeconds: movieData.timerSeconds || 10,
-      adSlots: finalAdSlots
-    };
-
-    // Save to localStorage so it survives server restarts, cold starts and scale-downs indefinitely
-    try {
-      const stored = localStorage.getItem("movie_go_custom_movies");
-      const currentLocal: Movie[] = stored ? JSON.parse(stored) : [];
-      currentLocal.unshift(newMovie);
-      localStorage.setItem("movie_go_custom_movies", JSON.stringify(currentLocal));
-    } catch (err) {
-      console.warn("Failed to write custom movie to localStorage:", err);
-    }
-
-    // Optimistically update React tab list immediately
-    setMovies((prev) => {
-      if (prev.some((m) => m.title === newMovie.title)) return prev;
-      return [newMovie, ...prev];
-    });
-
+    
     try {
       const res = await fetch("/api/movies", {
         method: "POST",
@@ -459,25 +366,6 @@ export default function App() {
     if (finalAdSlots) {
       mergedData.adSlots = finalAdSlots;
     }
-
-    // Update in localStorage if it exists there
-    try {
-      const stored = localStorage.getItem("movie_go_custom_movies");
-      if (stored) {
-        const currentLocal: Movie[] = JSON.parse(stored);
-        const updatedLocal = currentLocal.map((m) =>
-          m.id === id ? ({ ...m, ...mergedData } as Movie) : m
-        );
-        localStorage.setItem("movie_go_custom_movies", JSON.stringify(updatedLocal));
-      }
-    } catch (err) {
-      console.warn("Failed to update custom movie in localStorage:", err);
-    }
-
-    // Optimistically update local React memory state
-    setMovies((prev) =>
-      prev.map((m) => (m.id === id ? ({ ...m, ...mergedData } as Movie) : m))
-    );
 
     try {
       const res = await fetch(`/api/movies/${id}`, {
@@ -507,18 +395,6 @@ export default function App() {
     }
     if (!confirmResult) return;
     
-    // Remove from localStorage
-    try {
-      const stored = localStorage.getItem("movie_go_custom_movies");
-      if (stored) {
-        const currentLocal: Movie[] = JSON.parse(stored);
-        const updatedLocal = currentLocal.filter((m) => m.id !== id);
-        localStorage.setItem("movie_go_custom_movies", JSON.stringify(updatedLocal));
-      }
-    } catch (err) {
-      console.warn("Failed to delete custom movie from localStorage:", err);
-    }
-
     // Optimistically update local state immediately
     setMovies((prev) => prev.filter((m) => m.id !== id));
 
@@ -688,7 +564,7 @@ export default function App() {
                       {cat === "All" && userState.isBangla ? "সকল ক্যাটাগরি" : cat}
                     </button>
                   ))}
-                  {isAdminLoggedIn && checkIsUserAdmin() && (
+                  {(isAdminLoggedIn || checkIsUserAdmin()) && (
                     <button
                       onClick={() => setActiveTab("admin")}
                       className="px-3.5 py-1.5 rounded-full text-xs font-mono bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/10 shrink-0 font-bold"
@@ -826,7 +702,13 @@ export default function App() {
                 userState={userState}
                 settings={settings}
                 onUpdateUserState={(update) => setUserState((p) => ({ ...p, ...update }))}
-                onOpenAdminLogin={() => setShowAdminLoginModal(true)}
+                onOpenAdminLogin={() => {
+                  if (checkIsUserAdmin()) {
+                    setActiveTab("admin");
+                  } else {
+                    setShowAdminLoginModal(true);
+                  }
+                }}
                 isAdminLoggedIn={isAdminLoggedIn}
                 onAdminLogout={handleAdminLogout}
                 isBangla={userState.isBangla}
@@ -834,7 +716,7 @@ export default function App() {
             )}
 
             {/* VIEW F: INTERACTIVE ADMIN PANEL */}
-            {activeTab === "admin" && isAdminLoggedIn && checkIsUserAdmin() && (
+            {activeTab === "admin" && (isAdminLoggedIn || checkIsUserAdmin()) && (
               <AdminPanel
                 movies={movies}
                 settings={settings}
