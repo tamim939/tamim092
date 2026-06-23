@@ -27,6 +27,8 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   // Tabs: 'settings', 'add_movie', 'manage_movies'
   const [activeSubTab, setActiveSubTab] = useState<"settings" | "add_movie" | "manage_movies">("manage_movies");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   // Selection for edit
   const [editingMovieId, setEditingMovieId] = useState<string | null>(null);
@@ -90,18 +92,23 @@ export default function AdminPanel({
     setActiveSubTab("add_movie");
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title) return;
 
     if (editingMovieId) {
-      onUpdateMovie(editingMovieId, formData);
-      setEditingMovieId(null);
+      await onUpdateMovie(editingMovieId, formData);
+      setSuccessMsg(isBangla ? "মুভিটি সফলভাবে আপডেট করা হয়েছে!" : "Movie updated successfully!");
     } else {
-      onAddMovie(formData);
+      await onAddMovie(formData);
+      setSuccessMsg(isBangla ? "নতুন মুভি সফলভাবে পাবলিশ করা হয়েছে!" : "New movie published successfully!");
     }
 
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+
     // Reset formData
+    setEditingMovieId(null);
     setFormData({
       title: "",
       banglaTitle: "",
@@ -222,6 +229,23 @@ export default function AdminPanel({
 
   return (
     <div id="admin-panel" className="space-y-6 max-w-4xl mx-auto pb-10 select-none text-slate-200">
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-[100] bg-green-500 text-white px-6 py-3 rounded-2xl shadow-2xl shadow-green-500/20 flex items-center gap-3 border border-white/10"
+          >
+            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+              <Check className="w-4 h-4" />
+            </div>
+            <span className="font-medium text-sm">{successMsg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header Badge */}
       <div className="flex items-center gap-3 bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-900 p-4 rounded-3xl border border-red-500/10 shadow-xl">
         <div className="p-3 bg-red-600/15 text-red-500 rounded-full">
