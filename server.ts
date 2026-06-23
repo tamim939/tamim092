@@ -2,7 +2,8 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
-import admin from "firebase-admin";
+import { initializeApp, getApps, getApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import "dotenv/config";
 
 interface Movie {
@@ -205,12 +206,12 @@ function initDb() {
 
   if (!fs.existsSync(DB_PATH)) {
     const defaultDb: DbSchema = {
-      movies: defaultMovies,
+      movies: [],
       settings: defaultSettings,
     };
     try {
       fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2), "utf8");
-      console.log("Database initialized with modern cinematic defaults!");
+      console.log("Database initialized with empty movies list.");
     } catch (err: any) {
       console.warn("Could not write initial default database to disk (filesystem read-only?):", err.message || err);
     }
@@ -241,23 +242,25 @@ function getFirebaseConfig() {
 // Global flag to track if admin was initialized
 let isAdminInitialized = false;
 function initFirestore() {
-  if (isAdminInitialized) return admin.firestore();
-  
   const config = getFirebaseConfig();
-  try {
-    admin.initializeApp({
-      projectId: config.projectId,
-    });
-    isAdminInitialized = true;
-    console.log(`Firebase Admin initialized for Firestore project: ${config.projectId}`);
-  } catch (err: any) {
-    if (err.code === 'app/duplicate-app') {
-       isAdminInitialized = true;
-    } else {
+  
+  if (getApps().length === 0) {
+    try {
+      initializeApp({
+        projectId: config.projectId,
+      });
+      console.log(`Firebase Admin initialized for Firestore project: ${config.projectId}`);
+    } catch (err: any) {
       console.error("Firebase Admin initialization failed:", err);
     }
   }
-  return admin.firestore();
+  
+  const app = getApp();
+  // If a specific database ID other than (default) is needed, pass it here
+  if (config.databaseId && config.databaseId !== "(default)") {
+    return getFirestore(app, config.databaseId);
+  }
+  return getFirestore(app);
 }
 
 async function syncFromFirestore() {
@@ -282,8 +285,12 @@ async function syncFromFirestore() {
         } catch (we) {}
       }
     } else {
-      console.log("No remote database document found in Firestore. Seeding document with defaults...");
+      console.log("No remote database document found in Firestore. Starting with empty document...");
       const currentLocal = readDb();
+      // Ensure we don't seed with defaults if we want a clean slate
+      if (currentLocal.movies.length === 0) {
+         console.log("Local database is empty, initializing Firestore with empty dataset.");
+      }
       await syncToFirestore(currentLocal);
     }
     lastFirestoreSyncTime = Date.now();
@@ -783,7 +790,15 @@ app.get("/api/rotating-ad-index", (req, res) => {
 async function startServer() {
 
   // Load initial dataset from Firestore immediately on boot
-  syncFromFirestore().catch(e => console.error("Initial Firestore sync failed:", e));
+  syncFromFirestore().then(() => {
+    // One-time cleanup for default seeded movies from previous versions
+    if (globalCachedDb && globalCachedDb.movies.some(m => m.id.startsWith("m"))) {
+      console.log("Detected legacy default movies. Cleaning up database to ensure a fresh start...");
+      globalCachedDb.movies = globalCachedDb.movies.filter(m => !m.id.startsWith("m"));
+      writeDb(globalCachedDb);
+      syncToFirestore(globalCachedDb).catch(console.error);
+    }
+  }).catch(e => console.error("Initial Firestore sync failed:", e));
 
   // Handle Vite development middleware / production static build
   if (process.env.NODE_ENV !== "production") {

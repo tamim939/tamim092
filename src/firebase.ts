@@ -5,14 +5,14 @@ import { getAuth } from "firebase/auth";
 const metaEnv = (import.meta as any).env || {};
 
 const firebaseConfig = {
-  apiKey: metaEnv.VITE_FIREBASE_API_KEY || "AIzaSyCAz1nADtYgt7S5gTUm6WGz5N9RJ2_L1Lc",
+  apiKey: metaEnv.VITE_FIREBASE_API_KEY || "AIzaSyDhPWB3lDnu-nLGLlROOeYXcPPOILjf8a8",
   authDomain: metaEnv.VITE_FIREBASE_AUTH_DOMAIN || "win333-c2cee.firebaseapp.com",
   databaseURL: metaEnv.VITE_FIREBASE_DATABASE_URL || "https://win333-c2cee-default-rtdb.firebaseio.com",
   projectId: metaEnv.VITE_FIREBASE_PROJECT_ID || "win333-c2cee",
   storageBucket: metaEnv.VITE_FIREBASE_STORAGE_BUCKET || "win333-c2cee.firebasestorage.app",
   messagingSenderId: metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || "67795790100",
-  appId: metaEnv.VITE_FIREBASE_APP_ID || "1:67795790100:web:4e4f3cb7226933401c3a01",
-  measurementId: metaEnv.VITE_FIREBASE_MEASUREMENT_ID || "G-Y2360ZLLGL"
+  appId: metaEnv.VITE_FIREBASE_APP_ID || "1:67795790100:web:87327547cca54fa61c3a01",
+  measurementId: metaEnv.VITE_FIREBASE_MEASUREMENT_ID || "G-WBLWTKLRPY"
 };
 
 export let app: any = null;
