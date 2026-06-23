@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import admin from "firebase-admin";
+import "dotenv/config";
 
 interface Movie {
   id: string;
@@ -227,192 +229,78 @@ function getFirebaseConfig() {
     }
   }
 
-  const envApiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || fileConfig.apiKey;
-  const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || fileConfig.projectId;
-  const firestoreDatabaseId = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID || fileConfig.firestoreDatabaseId || "(default)";
-  const authDomain = process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN || fileConfig.authDomain || `${projectId}.firebaseapp.com`;
-  const storageBucket = process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || fileConfig.storageBucket || `${projectId}.firebasestorage.app`;
-  const messagingSenderId = process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID || fileConfig.messagingSenderId;
-  const appId = process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID || fileConfig.appId;
-
-  if (envApiKey) {
-    return {
-      apiKey: envApiKey,
-      authDomain,
-      projectId,
-      storageBucket,
-      messagingSenderId,
-      appId,
-      firestoreDatabaseId,
-    };
-  }
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || fileConfig.projectId || "win333-c2cee";
+  const databaseId = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID || fileConfig.firestoreDatabaseId || "(default)";
 
   return {
-    apiKey: "AIzaSyCAz1nADtYgt7S5gTUm6WGz5N9RJ2_L1Lc",
-    authDomain: "win333-c2cee.firebaseapp.com",
-    projectId: "win333-c2cee",
-    storageBucket: "win333-c2cee.firebasestorage.app",
-    messagingSenderId: "67795790100",
-    appId: "1:67795790100:web:4e4f3cb7226933401c3a01",
-    firestoreDatabaseId: "(default)",
+    projectId,
+    databaseId,
   };
 }
 
-// Helper to race a promise against a timeout
-function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(errorMessage)), ms)
-    )
-  ]);
-}
-
-// Helper to translate JSON to Firestore REST format
-function toFirestoreValue(val: any): any {
-  if (val === null || val === undefined) {
-    return { nullValue: null };
-  }
-  if (typeof val === "boolean") {
-    return { booleanValue: val };
-  }
-  if (typeof val === "number") {
-    if (Number.isInteger(val)) {
-      return { integerValue: val.toString() };
+// Global flag to track if admin was initialized
+let isAdminInitialized = false;
+function initFirestore() {
+  if (isAdminInitialized) return admin.firestore();
+  
+  const config = getFirebaseConfig();
+  try {
+    admin.initializeApp({
+      projectId: config.projectId,
+    });
+    isAdminInitialized = true;
+    console.log(`Firebase Admin initialized for Firestore project: ${config.projectId}`);
+  } catch (err: any) {
+    if (err.code === 'app/duplicate-app') {
+       isAdminInitialized = true;
+    } else {
+      console.error("Firebase Admin initialization failed:", err);
     }
-    return { doubleValue: val };
   }
-  if (typeof val === "string") {
-    return { stringValue: val };
-  }
-  if (Array.isArray(val)) {
-    return {
-      arrayValue: {
-        values: val.map(toFirestoreValue)
-      }
-    };
-  }
-  if (typeof val === "object") {
-    const fields: any = {};
-    for (const key of Object.keys(val)) {
-      if (val[key] !== undefined) {
-        fields[key] = toFirestoreValue(val[key]);
-      }
-    }
-    return {
-      mapValue: {
-        fields
-      }
-    };
-  }
-  return { stringValue: String(val) };
-}
-
-// Helper to translate Firestore REST format to standard JSON objects
-function fromFirestoreValue(val: any): any {
-  if (!val) return null;
-  if ("stringValue" in val) return val.stringValue;
-  if ("integerValue" in val) return parseInt(val.integerValue, 10);
-  if ("doubleValue" in val) return parseFloat(val.doubleValue);
-  if ("booleanValue" in val) return val.booleanValue;
-  if ("nullValue" in val) return null;
-  if ("arrayValue" in val) {
-    const list = val.arrayValue.values || [];
-    return list.map((item: any) => fromFirestoreValue(item));
-  }
-  if ("mapValue" in val) {
-    const fields = val.mapValue.fields || {};
-    const obj: any = {};
-    for (const k of Object.keys(fields)) {
-      obj[k] = fromFirestoreValue(fields[k]);
-    }
-    return obj;
-  }
-  return null;
+  return admin.firestore();
 }
 
 async function syncFromFirestore() {
   try {
-    const config = getFirebaseConfig();
-    const projectId = config.projectId;
-    const databaseId = config.firestoreDatabaseId || "(default)";
-    const apiKey = config.apiKey;
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/app_data/main_db?key=${apiKey}`;
-
-    console.log("Synchronizing data down from Cloud Firestore REST API...");
-    const res = await withTimeout(
-      fetch(url),
-      10000,
-      "Firestore read via REST timed out after 10000ms"
-    );
-
-    if (res.ok) {
-      const data = await res.json();
-      const fields = data.fields || {};
-      const movies = fromFirestoreValue(fields.movies);
-      const settings = fromFirestoreValue(fields.settings);
-
-      if (Array.isArray(movies) && settings) {
-        console.log("Fetched latest database from Cloud Firestore REST successfully! Count:", movies.length);
+    console.log("Synchronizing data down from Cloud Firestore Admin API...");
+    const db = initFirestore();
+    const doc = await db.collection("app_data").doc("main_db").get();
+    
+    if (doc.exists) {
+      const data = doc.data();
+      if (data && Array.isArray(data.movies) && data.settings) {
         const localData: DbSchema = {
-          movies,
-          settings
+          movies: data.movies,
+          settings: data.settings
         };
+        console.log("Fetched latest database from Cloud Firestore Admin successfully! Count:", localData.movies.length);
+        
+        // Update local cache and disk
+        globalCachedDb = localData;
         try {
           fs.writeFileSync(DB_PATH, JSON.stringify(localData, null, 2), "utf8");
-        } catch (we: any) {
-          console.warn("Could not write Firestore down-sync to db.json (filesystem read-only?):", we.message);
-        }
-        globalCachedDb = localData;
+        } catch (we) {}
       }
-    } else if (res.status === 404) {
-      console.log("No remote database document found. Seeding with initial local dataset... ");
+    } else {
+      console.log("No remote database document found in Firestore. Seeding document with defaults...");
       const currentLocal = readDb();
       await syncToFirestore(currentLocal);
-      console.log("Seeded Cloud Firestore database document with current local dataset!");
-    } else {
-      console.warn("Cloud Firestore REST down-sync returned non-ok status:", res.status, await res.text());
     }
     lastFirestoreSyncTime = Date.now();
   } catch (err: any) {
-    console.warn("Cloud Firestore database REST sync download skipped/failed:", err.message || err);
-    lastFirestoreSyncTime = Date.now();
+    console.warn("Cloud Firestore database Admin sync download failed:", err.message || err);
   }
 }
 
 async function syncToFirestore(data: DbSchema) {
   try {
-    const config = getFirebaseConfig();
-    const projectId = config.projectId;
-    const databaseId = config.firestoreDatabaseId || "(default)";
-    const apiKey = config.apiKey;
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/app_data/main_db?key=${apiKey}`;
-
-    const fields: any = {};
-    for (const key of Object.keys(data)) {
-      fields[key] = toFirestoreValue((data as any)[key]);
-    }
-    const payload = { fields };
-
-    console.log("Backing up database to Cloud Firestore REST API...");
-    const res = await withTimeout(
-      fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }),
-      10000,
-      "Firestore write via REST timed out after 10000ms"
-    );
-
-    if (res.ok) {
-      console.log("Successfully backed up database modification to Cloud Firestore REST!");
-      lastFirestoreSyncTime = Date.now();
-    } else {
-      console.warn("Cloud Firestore REST backup returned non-ok status:", res.status, await res.text());
-    }
+    console.log("Backing up database to Cloud Firestore Admin API...");
+    const db = initFirestore();
+    await db.collection("app_data").doc("main_db").set(data);
+    console.log("Successfully backed up database modification to Cloud Firestore Admin!");
+    lastFirestoreSyncTime = Date.now();
   } catch (err: any) {
-    console.warn("Failed to back up database modification to Cloud Firestore REST:", err.message || err);
+    console.warn("Failed to back up database modification to Cloud Firestore Admin:", err.message || err);
   }
 }
 
@@ -893,6 +781,9 @@ app.get("/api/rotating-ad-index", (req, res) => {
 });
 
 async function startServer() {
+
+  // Load initial dataset from Firestore immediately on boot
+  syncFromFirestore().catch(e => console.error("Initial Firestore sync failed:", e));
 
   // Handle Vite development middleware / production static build
   if (process.env.NODE_ENV !== "production") {
