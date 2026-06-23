@@ -25,7 +25,7 @@ export default function App() {
     chatGroupUrl: "https://t.me/MovieGo_HD_bot?start=chat",
     adultChannelUrl: "https://t.me/MovieGo_HD_bot?start=adult",
     livetvChannelUrl: "https://t.me/MovieGo_HD_bot?start=livetv",
-    allowedTelegramUsernames: "@foysal_537, @bio_matrixs",
+    allowedTelegramUsernames: "@foysal_537, @bio_matrixs, @TRADER_TAMIM_3",
     rotationHours: 1,
     categories: ["All", "Movie", "Bachelor Point", "Bangla", "Hindi", "Animation"]
   });
@@ -93,7 +93,16 @@ export default function App() {
     const cleanUser = (userState.username || "").trim().toLowerCase();
     const cleanUserNoAt = cleanUser.startsWith("@") ? cleanUser.slice(1) : cleanUser;
     
-    return cleanUserNoAt === "bio_matrixs";
+    // Check against the allowed list in settings
+    const allowed = (settings.allowedTelegramUsernames || "").split(",").map(u => {
+      const trimmed = u.trim().toLowerCase();
+      return trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
+    });
+
+    // Also check for the specific numeric ID provided by the user
+    const isTamimId = cleanUser.includes("7228630025");
+    
+    return allowed.includes(cleanUserNoAt) || isTamimId;
   };
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");

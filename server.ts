@@ -58,7 +58,7 @@ function initDb() {
     livetvChannelUrl: "https://t.me/MovieGo_HD_bot?start=livetv",
     rotationHours: 1, // 1-hourly ad rotation
     categories: ["All", "Movie", "Bachelor Point", "Bangla", "Hindi", "Animation"],
-    allowedTelegramUsernames: "@foysal_537, @bio_matrixs"
+    allowedTelegramUsernames: "@foysal_537, @bio_matrixs, @TRADER_TAMIM_3"
   };
 
   const defaultMovies: Movie[] = [
@@ -248,12 +248,12 @@ function getFirebaseConfig() {
   }
 
   return {
-    apiKey: "AIzaSyBliEfa9t4eqIrKlYz-AXBJtpAqATxYlhA",
-    authDomain: "movie-bd-b2d00.firebaseapp.com",
-    projectId: "movie-bd-b2d00",
-    storageBucket: "movie-bd-b2d00.firebasestorage.app",
-    messagingSenderId: "844771007114",
-    appId: "1:844771007114:web:282194ccce0489287dab73",
+    apiKey: "AIzaSyCAz1nADtYgt7S5gTUm6WGz5N9RJ2_L1Lc",
+    authDomain: "win333-c2cee.firebaseapp.com",
+    projectId: "win333-c2cee",
+    storageBucket: "win333-c2cee.firebasestorage.app",
+    messagingSenderId: "67795790100",
+    appId: "1:67795790100:web:4e4f3cb7226933401c3a01",
     firestoreDatabaseId: "(default)",
   };
 }
