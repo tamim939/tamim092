@@ -40,6 +40,7 @@ interface AppSettings {
 interface DbSchema {
   movies: Movie[];
   settings: AppSettings;
+  lastUpdated?: number;
 }
 
 const DB_PATH = path.join(process.cwd(), "data", "db.json");
@@ -130,49 +131,64 @@ function initFirestore() {
 
 async function syncFromFirestore() {
   try {
-    console.log("Synchronizing data down from Cloud Firestore Admin API...");
+    const config = getFirebaseConfig();
+    if (!config.apiKey && !process.env.FIREBASE_SERVICE_ACCOUNT) {
+      console.log("Firestore sync skipped: No configuration found.");
+      return;
+    }
+
+    console.log("Synchronizing data from Cloud Firestore...");
     const db = initFirestore();
     const doc = await db.collection("app_data").doc("main_db").get();
     
     if (doc.exists) {
-      const data = doc.data();
-      if (data && Array.isArray(data.movies) && data.settings) {
-        const localData: DbSchema = {
-          movies: data.movies,
-          settings: data.settings
-        };
-        console.log("Fetched latest database from Cloud Firestore Admin successfully! Count:", localData.movies.length);
-        
-        // Update local cache and disk
-        globalCachedDb = localData;
-        try {
-          fs.writeFileSync(DB_PATH, JSON.stringify(localData, null, 2), "utf8");
-        } catch (we) {}
+      const remoteData = doc.data() as DbSchema;
+      if (remoteData && Array.isArray(remoteData.movies)) {
+        const localData = readDb();
+        const remoteLastUpdated = remoteData.lastUpdated || 0;
+        const localLastUpdated = localData.lastUpdated || 0;
+
+        // If remote is strictly newer, or local is empty but remote has data
+        if (remoteLastUpdated > localLastUpdated || (localData.movies.length === 0 && remoteData.movies.length > 0)) {
+          console.log(`Updating local database from Firestore (Remote: ${remoteData.movies.length} movies)`);
+          globalCachedDb = remoteData;
+          try {
+            if (!fs.existsSync(path.dirname(DB_PATH))) {
+              fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+            }
+            fs.writeFileSync(DB_PATH, JSON.stringify(remoteData, null, 2), "utf8");
+          } catch (we) {}
+        } else if (localLastUpdated > remoteLastUpdated && localData.movies.length > 0) {
+          // Local is newer, push to Firestore
+          console.log("Local database is newer. Syncing UP to Firestore...");
+          syncToFirestore(localData).catch(() => {});
+        }
       }
     } else {
-      console.log("No remote database document found in Firestore. Starting with empty document...");
+      console.log("No remote database document found. Uploading current local state...");
       const currentLocal = readDb();
-      // Ensure we don't seed with defaults if we want a clean slate
-      if (currentLocal.movies.length === 0) {
-         console.log("Local database is empty, initializing Firestore with empty dataset.");
-      }
-      await syncToFirestore(currentLocal);
+      syncToFirestore(currentLocal).catch(() => {});
     }
     lastFirestoreSyncTime = Date.now();
   } catch (err: any) {
-    console.warn("Cloud Firestore database Admin sync download failed:", err.message || err);
+    console.warn("Cloud Firestore sync failed:", err.message);
   }
 }
 
 async function syncToFirestore(data: DbSchema) {
   try {
+    const config = getFirebaseConfig();
+    if (!config.apiKey && !process.env.FIREBASE_SERVICE_ACCOUNT) return;
+
     console.log("Backing up database to Cloud Firestore Admin API...");
     const db = initFirestore();
+    // Ensure we include a timestamp if missing
+    if (!data.lastUpdated) data.lastUpdated = Date.now();
     await db.collection("app_data").doc("main_db").set(data);
-    console.log("Successfully backed up database modification to Cloud Firestore Admin!");
+    console.log("Successfully backed up database to Cloud Firestore Admin!");
     lastFirestoreSyncTime = Date.now();
   } catch (err: any) {
-    console.warn("Failed to back up database modification to Cloud Firestore Admin:", err.message || err);
+    console.warn("Failed to back up to Firestore Admin:", err.message);
   }
 }
 
@@ -182,14 +198,13 @@ let lastFirestoreSyncTime = 0;
 
 async function ensureFreshData() {
   const now = Date.now();
-  if (now - lastFirestoreSyncTime > 15000) {
-    console.log(`[Firestore Cache Check] Local cache is stale (last synced ${((now - lastFirestoreSyncTime) / 1000).toFixed(1)}s ago). Synchronizing...`);
-    // Pre-emptively update to avoid double-firing during async await
+  // Check every 30 seconds if we need to pull
+  if (now - lastFirestoreSyncTime > 30000) {
     lastFirestoreSyncTime = now;
     try {
       await syncFromFirestore();
     } catch (err: any) {
-      console.warn("Background ensuring of fresh data from Firestore failed:", err.message || err);
+      console.warn("Background fresh data check failed:", err.message);
     }
   }
 }
@@ -202,43 +217,24 @@ function readDb(): DbSchema {
   try {
     initDb();
     if (!fs.existsSync(DB_PATH)) {
-      throw new Error("DB_PATH file does not exist after initDb");
+      throw new Error("DB file missing");
     }
     const content = fs.readFileSync(DB_PATH, "utf8").trim();
     if (!content) {
-      if (globalCachedDb) {
-        console.warn("DB_PATH file content is empty, falling back to globalCachedDb...");
-        return globalCachedDb;
-      }
-      throw new Error("DB_PATH file content is empty");
+      throw new Error("DB file empty");
     }
     const parsed = JSON.parse(content);
     if (!parsed || !Array.isArray(parsed.movies)) {
-      throw new Error("DB structure movies list is invalid or missing");
-    }
-    if (!parsed.settings) {
-      throw new Error("DB structure settings list is invalid or missing");
-    }
-    if (parsed.settings.allowedTelegramUsernames === undefined) {
-      parsed.settings.allowedTelegramUsernames = "@foysal_537, @bio_matrixs";
-      try {
-        fs.writeFileSync(DB_PATH, JSON.stringify(parsed, null, 2), "utf8");
-      } catch (e) {}
+      throw new Error("Invalid DB structure");
     }
     globalCachedDb = parsed;
     return parsed;
   } catch (error) {
-    console.error("Error reading database sync:", error);
+    console.error("Error reading database:", error);
     
-    // Return the stable in-memory cached copy if available to completely shield transient read locks
-    if (globalCachedDb) {
-      console.log("Serving request from globalCachedDb to avoid data loss.");
-      return globalCachedDb;
-    }
+    if (globalCachedDb) return globalCachedDb;
 
-    // Never delete/unlink file immediately to prevent permanent data loss!
-    
-    // Fallback default setup to force recover in memory
+    // Last resort default object ONLY if no disk and no cache
     const defaultSettings: AppSettings = {
       defaultTimerSeconds: 10,
       telegramBotUrl: "https://t.me/MovieGo_HD_bot",
@@ -248,177 +244,32 @@ function readDb(): DbSchema {
       adultChannelUrl: "https://t.me/MovieGo_HD_bot?start=adult",
       livetvChannelUrl: "https://t.me/MovieGo_HD_bot?start=livetv",
       rotationHours: 1,
-      categories: ["All", "Movie", "CID", "Bachelor Point", "Bangla", "Hindi", "Hollywood", "South Indian"],
+      categories: ["All", "Movie", "Bachelor Point", "Bangla", "Hindi", "Animation"],
       allowedTelegramUsernames: "@foysal_537, @bio_matrixs, @TRADER_TAMIM_3"
     };
-
-    const defaultMovies: Movie[] = [
-      {
-        id: "m1",
-        title: "Rockstar 2026 Movie HD",
-        banglaTitle: "রকস্টার মুভি। Rockstar 2026 Movie HD",
-        category: "Movie",
-        rating: "8.5",
-        releaseDate: "12 May 2026",
-        imageUrl: "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&q=80&w=1200",
-        teaserImageUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=1200",
-        downloadUrl: "https://example.com/download/rockstar-2026",
-        isBanner: true,
-        isUpcoming: false,
-        status: "Released",
-        initials: "MB",
-        timerSeconds: 10,
-        adSlots: [
-          "https://www.google.com", "https://www.wikipedia.org", "https://www.github.com",
-          "https://www.youtube.com", "https://www.medium.com", "https://www.reddit.com",
-          "https://www.quora.com", "https://www.stackoverflow.com", "https://www.linkedin.com",
-          "https://www.bing.com"
-        ]
-      },
-      {
-        id: "m2",
-        title: "SOLDIER 2026 Shakib Khan Movie",
-        banglaTitle: "সোলজার ২০২৬। Soldier - Shakib Khan",
-        category: "Bangla",
-        rating: "9.2",
-        releaseDate: "25 Sep 2026",
-        imageUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800",
-        teaserImageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=1200",
-        downloadUrl: "https://example.com/download/soldier-2026",
-        isBanner: true,
-        isUpcoming: true,
-        status: "Coming Soon",
-        initials: "FA",
-        timerSeconds: 12,
-        adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-      },
-      {
-        id: "m3",
-        title: "Soptodingar Guptodhon",
-        banglaTitle: "সপ্তডিঙার গুপ্তধন - Soptodingar Guptodhon",
-        category: "Bangla",
-        rating: "7.9",
-        releaseDate: "03 Aug 2025",
-        imageUrl: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&q=80&w=800",
-        teaserImageUrl: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&q=80&w=1200",
-        downloadUrl: "https://example.com/download/soptodingar-guptodhon",
-        isBanner: false,
-        isUpcoming: false,
-        status: "Released",
-        initials: "MB",
-        timerSeconds: 10,
-        adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-      },
-      {
-        id: "m4",
-        title: "Leo (Hindi Raw UHD)",
-        banglaTitle: "লিও হিন্দি এইচডি লিক",
-        category: "Hindi",
-        rating: "8.1",
-        releaseDate: "19 Oct 2023",
-        imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800",
-        downloadUrl: "https://example.com/download/leo",
-        isBanner: false,
-        isUpcoming: false,
-        status: "Released",
-        initials: "FA",
-        timerSeconds: 10,
-        adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-      },
-      {
-        id: "m5",
-        title: "Monsieur Hulot's Holiday",
-        banglaTitle: "মঁসিয়ে উলোর হলিডে (Classic)",
-        category: "Hollywood",
-        rating: "6.9",
-        releaseDate: "25 Feb 1953",
-        imageUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&q=80&w=800",
-        downloadUrl: "https://example.com/download/mon-hulot",
-        isBanner: false,
-        isUpcoming: true,
-        status: "Released",
-        initials: "MB",
-        timerSeconds: 10,
-        adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-      },
-      {
-        id: "m6",
-        title: "PlayTime",
-        banglaTitle: "প্লে-টাইম (Classic Comedy)",
-        category: "Hollywood",
-        rating: "7.7",
-        releaseDate: "13 Dec 1967",
-        imageUrl: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=800",
-        downloadUrl: "https://example.com/download/playtime",
-        isBanner: false,
-        isUpcoming: true,
-        status: "Released",
-        initials: "FA",
-        timerSeconds: 10,
-        adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-      },
-      {
-        id: "m7",
-        title: "Bachelor Point Season 5",
-        banglaTitle: "ব্যাচেলর পয়েন্ট সিজন ৫ - Bachelor Point S5",
-        category: "Bachelor Point",
-        rating: "9.5",
-        releaseDate: "20 Jun 2026",
-        imageUrl: "https://images.unsplash.com/photo-1585647347483-22b66260dfff?auto=format&fit=crop&q=80&w=800",
-        downloadUrl: "https://example.com/download/bachelor-point",
-        isBanner: false,
-        isUpcoming: false,
-        status: "Released",
-        initials: "FA",
-        timerSeconds: 8,
-        adSlots: Array(10).fill("https://t.me/MovieGo_HD_bot")
-      }
-    ];
-
-    const fallbackDb = { movies: defaultMovies, settings: defaultSettings };
-    try {
-      const dir = path.dirname(DB_PATH);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(DB_PATH, JSON.stringify(fallbackDb, null, 2), "utf8");
-    } catch (writeErr) {
-      console.error("Critical: Failed to recover write defaults:", writeErr);
-    }
-    return fallbackDb;
+    return { movies: [], settings: defaultSettings };
   }
 }
 
 // Write database
 function writeDb(data: DbSchema) {
-  // Always update our in-memory global cache as the active state immediately
+  data.lastUpdated = Date.now();
   globalCachedDb = data;
-  // Update lastFirestoreSyncTime immediately to prevent ensureFreshData from overwriting local state
-  // while syncToFirestore is in progress
   lastFirestoreSyncTime = Date.now();
   
   try {
     const dir = path.dirname(DB_PATH);
-    try {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
-      console.log("Database updated successfully on local disk.");
-    } catch (fsErr: any) {
-      console.warn("Could not save database update to local disk (filesystem read-only or restricted?):", fsErr.message || fsErr);
-    }
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     
-    // Asynchronously update Cloud Firestore backing securely without blocking the callback loop
-    try {
-      syncToFirestore(data).catch((fbErr) => {
-        console.warn("Background Cloud Firestore synchronization skipped/failed:", fbErr.message || fbErr);
-      });
-    } catch (triggerErr: any) {
-      console.warn("Failed to schedule background Cloud Firestore synchronization synchronously:", triggerErr.message || triggerErr);
-    }
+    // Atomic-like write
+    const tempPath = `${DB_PATH}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
+    fs.renameSync(tempPath, DB_PATH);
+    
+    console.log("Database saved to disk.");
+    syncToFirestore(data).catch(() => {});
   } catch (error: any) {
-    console.error("Critical error inside writeDb wrapper:", error.message || error);
+    console.error("Error writing database:", error.message);
   }
 }
 

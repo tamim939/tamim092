@@ -592,7 +592,7 @@ export default function AdminPanel({
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="bg-slate-950/60 text-xs text-white px-3 py-2.5 rounded-xl border border-white/5 outline-none w-full focus:border-red-500"
                 >
-                  {(settingsFormData.categories || settings.categories)
+                  {(settingsFormData?.categories || settings?.categories || ["Movie", "Bangla", "Hindi", "Animation"])
                     .filter((cat) => cat !== "All")
                     .map((cat) => (
                       <option key={cat} value={cat}>
@@ -810,63 +810,70 @@ export default function AdminPanel({
           </div>
 
           <div className="space-y-2.5 max-h-[500px] overflow-y-auto">
-            {movies.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-2xl border border-white/5 hover:border-red-500/10 transition"
-              >
-                <img
-                  src={m.imageUrl}
-                  alt=""
-                  className="w-10 h-14 object-cover rounded-lg"
-                />
-                <div className="flex-grow min-w-0">
-                  <h4 className="text-white text-xs font-bold leading-snug truncate">
-                    {m.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
-                    Category: <span className="text-red-400 font-bold">{m.category}</span> | Ad Slots Configured:{" "}
-                    <span className="text-amber-400 font-bold">
-                      {m.adSlots.filter((v) => v && v !== "").length}/10
-                    </span>
-                  </p>
-                  <div className="flex gap-2 mt-1.5">
-                    {m.isBanner && (
-                      <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase border border-red-500/10">
-                        Banner
+            {!movies || movies.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-slate-500 bg-slate-950/40 rounded-2xl border border-white/5">
+                <Film className="w-8 h-8 mb-2 opacity-20" />
+                <p className="text-xs">{isBangla ? "কোন মুভি পাওয়া যায়নি" : "No movies found"}</p>
+              </div>
+            ) : (
+              movies.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-2xl border border-white/5 hover:border-red-500/10 transition"
+                >
+                  <img
+                    src={m.imageUrl}
+                    alt=""
+                    className="w-10 h-14 object-cover rounded-lg"
+                  />
+                  <div className="flex-grow min-w-0">
+                    <h4 className="text-white text-xs font-bold leading-snug truncate">
+                      {m.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                      Category: <span className="text-red-400 font-bold">{m.category}</span> | Ad Slots Configured:{" "}
+                      <span className="text-amber-400 font-bold">
+                        {m.adSlots.filter((v) => v && v !== "").length}/10
                       </span>
-                    )}
-                    {m.isUpcoming && (
-                      <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase border border-amber-500/10">
-                        Upcoming
+                    </p>
+                    <div className="flex gap-2 mt-1.5">
+                      {m.isBanner && (
+                        <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase border border-red-500/10">
+                          Banner
+                        </span>
+                      )}
+                      {m.isUpcoming && (
+                        <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-mono font-bold uppercase border border-amber-500/10">
+                          Upcoming
+                        </span>
+                      )}
+                      <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono">
+                        ⏳ {m.timerSeconds || "Default"}s
                       </span>
-                    )}
-                    <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono">
-                      ⏳ {m.timerSeconds || "Default"}s
-                    </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      id={`edit-movie-${m.id}`}
+                      onClick={() => handleEditSelect(m)}
+                      className="p-1.5 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition"
+                      title="Edit movie properties"
+                    >
+                      <Edit2 size={13} />
+                    </button>
+                    <button
+                      id={`delete-movie-${m.id}`}
+                      onClick={() => onDeleteMovie(m.id)}
+                      className="p-1.5 bg-red-500/10 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition"
+                      title="Remove movie"
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    id={`edit-movie-${m.id}`}
-                    onClick={() => handleEditSelect(m)}
-                    className="p-1.5 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition"
-                    title="Edit movie properties"
-                  >
-                    <Edit2 size={13} />
-                  </button>
-                  <button
-                    id={`delete-movie-${m.id}`}
-                    onClick={() => onDeleteMovie(m.id)}
-                    className="p-1.5 bg-red-500/10 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition"
-                    title="Remove movie"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}
